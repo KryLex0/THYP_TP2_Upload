@@ -18,7 +18,11 @@ header('Content-Type: text/html; charset=utf-8');
 
 //taille max de 8 Mo
 $tailleMaxFichier = 8 * 1024 * 1024;
+//chemin des fichiers upload
 $cheminDest = $pathParent . "\uploadFiles";
+//type de fichier prit en charge
+$extensionAccepte = array("png", "jpg", "jpeg", "pdf");
+
 ?>
 
     <div class="divClass">
@@ -31,48 +35,53 @@ $cheminDest = $pathParent . "\uploadFiles";
                 <input type="submit" value="Envoyer">
             </form>
         </div>
+        <p>Type de fichier prit en charge: <?php foreach($extensionAccepte as $val){echo $val . ", ";} ?></p>
     </div>
 
     </br>
 
     <?php
+
+    
     //si un fichier est bien envoyé via le formulaire
     if(isset($_FILES["nomFichier"])){
         //si aucune erreur n'est présente lors de l'upload du fichier
         if ($_FILES["nomFichier"]["error"] == 0) {
-            //si l'input du nouveau nom est vide, garde le nom d'origine du fichier
-            if($_POST["nouveauNomFichier"] == null){
-                //permet d'obtenir l'extension
-                $array = explode('.', $_FILES['nomFichier']['name']);
-                $extension = end($array);
-                //nom du fichier seul
-                $nomFichier = basename($_FILES["nomFichier"]["name"], "." . $extension);
-            
-            //sinon, attribue le nouveau nom entré au fichier
-            }else{
-                $array = explode('.', $_FILES['nomFichier']['name']);
-                $extension = end($array);
+            //permet d'obtenir l'extension
+            $array = explode('.', $_FILES['nomFichier']['name']);
+            $extension = end($array);
+            echo $extension;
+            if(in_array($extension, $extensionAccepte)){
+                //si l'input du nouveau nom est vide, garde le nom d'origine du fichier
+                if($_POST["nouveauNomFichier"] == null){
+                    //nom du fichier seul
+                    $nomFichier = basename($_FILES["nomFichier"]["name"], "." . $extension);
                 
-                $nomFichier = $_POST["nouveauNomFichier"];
-                
+                //sinon, attribue le nouveau nom entré au fichier
+                }else{               
+                    $nomFichier = $_POST["nouveauNomFichier"];
+                    
+                }
+                //upload le fichier dans un dossier "/uploadFiles"
+                move_uploaded_file($_FILES["nomFichier"]["tmp_name"], $cheminDest . "\\" . $nomFichier . "." . $extension);
+                try {
+                    //connexion a la BDD
+                    $mysqlClient = new PDO($dbname, $login, $password);
+                    //ajoute des antislash devant tout les caractères spéciaux de l'url
+                    $cheminDest = addcslashes($cheminDest, "\\");
+                    //insertion des données dans la BDD
+                    $sqlQuery = "INSERT INTO uploadfilesdata(nom_fichier, extension_fichier, chemin_fichier) VALUES ('$nomFichier', '$extension', '".$cheminDest."')";
+                    $result = $mysqlClient->prepare($sqlQuery);
+                    $result->execute();
+                } catch(PDOException $e) {
+                    die('Erreur de connexion à la BDD. Erreur n°' . $e->getCode() . ':' . $e->getMessage());
+                }
+                //affiche un message d'upload réussi
+                ?>
+                <p style="text-align:center;">Upload du fichier <strong>'<?php echo $nomFichier; ?>'</strong> réussit.</p><?php
+            }else{?>
+                <p style="text-align:center;"><strong>L'extension du fichier n'est pas prit en charge.</strong></p><?php
             }
-            //upload le fichier dans un dossier "/uploadFiles"
-            move_uploaded_file($_FILES["nomFichier"]["tmp_name"], $cheminDest . "\\" . $nomFichier . "." . $extension);
-            try {
-                //connexion a la BDD
-                $mysqlClient = new PDO($dbname, $login, $password);
-                //ajoute des antislash devant tout les caractères spéciaux de l'url
-                $cheminDest = addcslashes($cheminDest, "\\");
-                //insertion des données dans la BDD
-                $sqlQuery = "INSERT INTO uploadfilesdata(nom_fichier, extension_fichier, chemin_fichier) VALUES ('$nomFichier', '$extension', '".$cheminDest."')";
-                $result = $mysqlClient->prepare($sqlQuery);
-                $result->execute();
-            } catch(PDOException $e) {
-                die('Erreur de connexion à la BDD. Erreur n°' . $e->getCode() . ':' . $e->getMessage());
-            }
-            //affiche un message d'upload réussi
-            ?>
-            <p style="text-align:center;">Upload du fichier <strong>'<?php echo $nomFichier; ?>'</strong> réussit.</p><?php
         //sinon, affiche un message d'erreur
         }else{?>
             <p style="text-align:center;">Une erreur est survenue. Veuillez réessayer.</p><?php

@@ -17,6 +17,47 @@
     border: solid 1px black;
     margin-bottom: 10px;
     margin-left: 10px;
-    
+}
 
+
+
+
+
+.divClassData{
+  display: inline-block;
+  text-align: center;
+  width: 400px;
+  height: 400px;
+  border: solid 1px black;
+  margin-bottom: 10px;
+  margin-left: 10px;
+}
+
+.divClassData img{
+  width: 70%;
+  height: 70%;
+}
+
+.zoomed {
+  transform: scale(1.5);
+ }
+
+
+
+ .changePage{
+  text-align: center;
+  margin-top: 10px;
+}
+
+.changePage{
+  text-align: center;
+
+  padding: 50px ;
+  width: 400px;
+margin: 30px auto;
+background:white;
+backdrop-filter:blur(10px);
+box-shadow:0px 2px 10px rgba(0,0,0,0.3);
+border-radius:10px;
+transition:transform 0.2s ease-in-out;
 }

@@ -1,22 +1,5 @@
 <?php
 
-
-
-
-
-//si les données retournés de la requete sont vides, modifie une variable de l'url et affiche la dernière page possédant des résultats 
-/*
-if(!getImagesDatabase($mysqlClient, $nbElemPage, $numDepartElem)){
-    if($_GET["numPage"] > $nbPageData){
-        $query = $_GET;
-        $query['numPage'] = $nbPageData;
-        $query_result = http_build_query($query);
-
-        header("LOCATION: ?$query_result");
-    }
-}
-*/
-
 //fonction qui retourne le nombre de lignes dans la BDD
 function getDatabaseCount($mysqlClient, $table){
     $sqlQueryCount = "SELECT COUNT(*) FROM $table";

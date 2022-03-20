@@ -25,7 +25,8 @@ if(!$_GET["numPage"]){
 }
 
 //taille max de 8 Mo
-$tailleMaxFichier = 8 * 1024 * 1024;
+$sizeMax = 8;
+$tailleMaxFichier = $sizeMax * 1024 * 1024;
 //chemin des fichiers upload
 $cheminDest = "uploadFiles";
 $pathImage = $pathParent . "\\" . $cheminDest;
@@ -158,7 +159,9 @@ if(isset($_GET["uploadSuccess"])){
             }else{
                 echo $val . ", ";
             }
-        } ?>
+        }
+        echo "</br>Taille max d'une image: $sizeMax Mo";
+        ?>
     </p>
 </div>
 

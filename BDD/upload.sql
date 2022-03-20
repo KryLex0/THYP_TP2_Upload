@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Mar 13, 2022 at 06:21 PM
+-- Generation Time: Mar 20, 2022 at 08:45 PM
 -- Server version: 10.4.10-MariaDB
 -- PHP Version: 7.3.12
 
@@ -32,11 +32,12 @@ USE `upload`;
 
 DROP TABLE IF EXISTS `uploadfilesdata`;
 CREATE TABLE IF NOT EXISTS `uploadfilesdata` (
-  `id_fichier` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `nom_fichier` varchar(255) NOT NULL,
   `extension_fichier` varchar(10) NOT NULL,
   `chemin_fichier` varchar(255) NOT NULL,
-  PRIMARY KEY (`id_fichier`)
+  `taille_image` int(11) NOT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 COMMIT;
 

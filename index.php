@@ -10,10 +10,12 @@
 <?php
 
 $pathParent = dirname(__FILE__);
+//appel d'un fichier contenant les login de la BDD
 require_once "credentials/credentials.php";
 
-//appel d'un fichier contenant les fonctions de pagination
-require_once "pagination.php";
+//appel d'un fichier contenant les fonctions de la BDD
+require_once "databaseMethod.php";
+
 
 //connexion a la BDD
 $mysqlClient = new PDO($dbname, $login, $password);
@@ -55,13 +57,15 @@ verifLastPage($mysqlClient, $tableName, $nbElemPage, $numDepartElem, $nbPageData
 //affiche un message en tête de page suivant la réussite ou non de l'upload grâce à un paramètre présent dans l'url
 if(isset($_GET["uploadSuccess"])){
     if($_GET["uploadSuccess"] == "true"){
-        echo "<p style='text-align:center;background-color:green'>Upload du fichier réussit.</p>";
+        echo "<p style='text-align:center;background-color:lightgreen;font-size:30px;'>Upload du fichier réussit.</p>";
     }elseif($_GET["uploadSuccess"] == "false"){
-        echo "<p style='text-align:center;background-color:yellow'>L'image est déjà présente dans la BDD.</p>";
+        echo "<p style='text-align:center;background-color:yellow;font-size:30px;'>L'image est déjà présente dans la BDD.</p>";
     }elseif($_GET["uploadSuccess"] == "extension"){
-        echo "<p style='text-align:center;background-color:orange'>Le type de fichier n'est pas prit en charge.</p>";
+        echo "<p style='text-align:center;background-color:orange;font-size:30px;'>Le type de fichier n'est pas prit en charge.</p>";
     }elseif($_GET["uploadSuccess"] == "error"){
-        echo "<p style='text-align:center;background-color:red'>Une erreur est survenue lors de l'upload. Veuillez réessayer.</p>";
+        echo "<p style='text-align:center;background-color:red;font-size:30px;'>Une erreur est survenue lors de l'upload. Veuillez réessayer.</p>";
+    }elseif($_GET["uploadSuccess"] == "scan"){
+        echo "<p style='text-align:center;background-color:lightblue;font-size:30px;'>L'ensemble des images du dossier ont été scannés.</p>";
     }
     
 
@@ -84,9 +88,10 @@ if(isset($_GET["uploadSuccess"])){
                 $i++;
             ?>
                 <div class="divClassData">
-                    <p><strong style="text-decoration: underline;">Nom image:</strong><?php echo(" " . $val["nom_fichier"] . "." . $val["extension_fichier"]); ?></p>
-                    <img class="image" src="<?php echo $cheminDest . "/" . $val["nom_fichier"] . "." . $val["extension_fichier"]; ?>" onClick="$(this).toggleClass('zoomed');">
+                    <img class="image" src="<?php echo $val["chemin_fichier"] . "/" . $val["nom_fichier"] . "." . $val["extension_fichier"]; ?>" onClick="$(this).toggleClass('zoomed');">
+                    <p><strong style="text-decoration: underline;">Nom de l'image:</strong><?php echo(" " . $val["nom_fichier"] . "." . $val["extension_fichier"]); ?></p>
                     <p><strong style="text-decoration: underline;">Taille de l'image:</strong><?php echo(" " . $val["taille_image"] . " ko");?></p>
+                    <p><strong style="text-decoration: underline;">Chemin de l'image:</strong><?php echo(" " . $val["chemin_fichier"]); ?></p>
                 </div>
 
             <?php 
@@ -106,12 +111,18 @@ if(isset($_GET["uploadSuccess"])){
 1, 2, [3], 4, 5, ..., 30-->
 <div class="changePage">
     <div class="changePageButton">
+        
         <!-- Affiche un bouton qui redirige vers la page 1 lorsqu'on se trouve sur une autre page que la page 1 -->
         <?php if($_GET["numPage"] != 1){?>
+            <!-- Aller à la 1ère page -->
+            <a href=<?php echo getPageUrlByNumber(1); ?> class="btn btn-info" style="background-color:red"><<</a>
+            <!-- Aller à la page précédente -->
+            <a href=<?php echo getPreviousPageUrl(); ?> class="btn btn-info" style="margin-right:10px;background-color:green"><</a>
+
             <a href=<?php echo getPageUrlByNumber(1); ?> class="btn btn-info"><?php echo (1); ?></a>
-        <?php } ?>
-        <?php
-        //if($_GET['numPage'] > 1 && $_GET['numPage'] < $nbPageData){
+        <?php }
+
+
             for($i=-2; $i<3; $i++){
                 //s'il y a une différence > 2 entre la 1ère page et la page actuelle (ou entre la dernière page et la page actuelle), affiche [...]
                 if($i == -2 && $_GET["numPage"] + $i > 2 || $i == 2 && $_GET["numPage"] + $i < $nbPageData - 2 ){
@@ -124,17 +135,23 @@ if(isset($_GET["uploadSuccess"])){
                     
                 //affiche les numéros de pages précédents et suivants autour de la page actuelle
                 }elseif($_GET["numPage"] + $i > 1 && $_GET["numPage"] + $i < $nbPageData ){
-        ?>
+                ?>
                 <a href=<?php echo getPageUrlByNumber($_GET["numPage"] + $i); ?> class="btn btn-info"><?php echo ($_GET["numPage"] + $i); ?></a>
 
-        <?php
+            <?php
                 }
             }
 
         //Affiche un bouton qui redirige vers la dernière page lorsqu'on se trouve sur une autre page que la dernière
         if($_GET["numPage"] != $nbPageData){?>
             <a href=<?php echo getPageUrlByNumber($nbPageData); ?> class="btn btn-info"><?php echo ($nbPageData); ?></a>
+            <!-- Aller à la page suivante -->
+            <a href=<?php echo getNextPageUrl(); ?> class="btn btn-info" style="margin-left:10px;background-color:green">></a>
+            <!-- Aller à la dernière page -->
+            <a href=<?php echo getPageUrlByNumber($nbPageData); ?> class="btn btn-info" style="background-color:red">>></a>
         <?php } ?>
+
+        
     </div>
 </div>
 
@@ -148,7 +165,7 @@ if(isset($_GET["uploadSuccess"])){
             <label>Votre fichier: </label>
             <input type="file" name="nomFichier"><br>
             <label>Nouveau nom du fichier: </label><input type="text" name="nouveauNomFichier" placeholder="Nom d'origine si vide"><br><br>
-            <input type="submit" value="Envoyer">
+            <input type="submit" value="Envoyer" name="uploadFile">
         </form>
     </div>
     <p>Type de fichier prit en charge:
@@ -170,7 +187,7 @@ if(isset($_GET["uploadSuccess"])){
     <?php
 
     //si un fichier est bien envoyé via le formulaire
-    if(isset($_FILES["nomFichier"])){
+    if(isset($_FILES["nomFichier"]) && isset($_POST["uploadFile"])){
         //si aucune erreur n'est présente lors de l'upload du fichier
         if ($_FILES["nomFichier"]["error"] == 0) {
             //permet d'obtenir l'extension
@@ -189,7 +206,7 @@ if(isset($_GET["uploadSuccess"])){
                     $nomFichier = $_POST["nouveauNomFichier"];
                 }
                 try {
-                    if(!dataIsInDB($mysqlClient, $tableName, "nom_fichier", $nomFichier)){
+                    if(!dataIsInDB($mysqlClient, $tableName, "nom_fichier", $nomFichier, "chemin_fichier", $cheminDest)){
                         //insertion des données dans la BDD
                         $sqlQuery = "INSERT INTO uploadfilesdata(nom_fichier, extension_fichier, chemin_fichier, taille_image) VALUES ('$nomFichier', '$extension', '".$cheminDest."', '$tailleImage')";
                         $result = $mysqlClient->prepare($sqlQuery);
@@ -198,13 +215,9 @@ if(isset($_GET["uploadSuccess"])){
                         move_uploaded_file($_FILES["nomFichier"]["tmp_name"], $pathImage . "\\" . $nomFichier . "." . $extension);
                         
                         //redirection vers la même page avec des paramètre pour savoir si l'upload est réussit ou non
-                        $URL=strtok($_SERVER["REQUEST_URI"], '?') . "?numPage=1&uploadSuccess=true";
-                        echo "<script type='text/javascript'>document.location.href='{$URL}';</script>";
-                        echo '<META HTTP-EQUIV="refresh" content="0;URL=' . $URL . '">';
+                        redirectToNewURL("true");
                     }else{
-                        $URL=strtok($_SERVER["REQUEST_URI"], '?') . "?numPage=1&uploadSuccess=false";
-                        echo "<script type='text/javascript'>document.location.href='{$URL}';</script>";
-                        echo '<META HTTP-EQUIV="refresh" content="0;URL=' . $URL . '">';
+                        redirectToNewURL("false");
                         
                     }
                 } catch(PDOException $e) {
@@ -217,17 +230,21 @@ if(isset($_GET["uploadSuccess"])){
                 <?php
                 //affiche un problème concernant le type de document ajouté qui n'est pas prit en charge
             }else{
-                $URL=strtok($_SERVER["REQUEST_URI"], '?') . "?numPage=1&uploadSuccess=extension";
-                echo "<script type='text/javascript'>document.location.href='{$URL}';</script>";
-                echo '<META HTTP-EQUIV="refresh" content="0;URL=' . $URL . '">';
+                redirectToNewURL("extension");
             }
         }else{
-                $URL=strtok($_SERVER["REQUEST_URI"], '?') . "?numPage=1&uploadSuccess=error";
-                echo "<script type='text/javascript'>document.location.href='{$URL}';</script>";
-                echo '<META HTTP-EQUIV="refresh" content="0;URL=' . $URL . '">';
+            redirectToNewURL("error");
         }
 
     }
 
 
-    ?>
+function redirectToNewURL($message){
+    $URL=strtok($_SERVER["REQUEST_URI"], '?') . "?numPage=1&uploadSuccess=" . $message;
+    echo "<script type='text/javascript'>document.location.href='{$URL}';</script>";
+    echo '<META HTTP-EQUIV="refresh" content="0;URL=' . $URL . '">';
+}
+
+
+
+?>

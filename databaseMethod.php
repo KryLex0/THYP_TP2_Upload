@@ -59,8 +59,8 @@ function verifLastPage($mysqlClient, $table, $nbElemPage, $numDepartElem, $nbPag
 }
 
 //vérifie si une image est déjà présente dans la BDD
-function dataIsInDB($mysqlClient, $table, $nomColonne, $donneeLigne){
-    $sqlQueryData = "SELECT * FROM $table WHERE $nomColonne='$donneeLigne'";
+function dataIsInDB($mysqlClient, $table, $nomColonne1, $donneeLigne1, $nomColonne2, $donneeLigne2){
+    $sqlQueryData = "SELECT * FROM $table WHERE $nomColonne1='$donneeLigne1' AND $nomColonne2='$donneeLigne2'";
     
     $result = $mysqlClient->prepare($sqlQueryData);
     $result->execute();
@@ -68,8 +68,33 @@ function dataIsInDB($mysqlClient, $table, $nomColonne, $donneeLigne){
     $isInDB = false;
     if(!empty($dataDatabase)){
         $isInDB = true;
-        echo "boucle";
     }
     return $isInDB;
 }
+
+//vérifie si une image présente dans la BDD existe également dans les dossiers de l'application
+function verifFileExist($mysqlClient, $table){
+    $sqlQueryData = "SELECT * FROM $table";
+    
+    $result = $mysqlClient->prepare($sqlQueryData);
+    $result->execute();
+    $dataDatabase = $result->fetchAll();
+    foreach($dataDatabase as $key){
+        //si l'image présente dans la BDD n'est pas présente dans les dossiers
+        if(!file_exists($key["chemin_fichier"] . "/" . $key["nom_fichier"] . "." . $key["extension_fichier"])){
+            //supprime les infos de l'image de la BDD
+            removeDataDatabase($mysqlClient, $table, $key["nom_fichier"], $key["extension_fichier"], $key["chemin_fichier"]);
+        }
+    }
+    
+}
+
+//fonction qui supprime les données d'une image de la BDD suivant son nom, son extension ainsi que le chemin
+function removeDataDatabase($mysqlClient, $table, $nom_fichier, $extension_fichier, $chemin_fichier){
+    $sqlQuery = "DELETE FROM $table WHERE nom_fichier='$nom_fichier' AND extension_fichier='$extension_fichier' AND chemin_fichier='".$chemin_fichier."'";
+	$result = $mysqlClient->prepare($sqlQuery);
+    $result->execute();
+}
+
+
 ?>
